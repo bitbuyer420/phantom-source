@@ -4,9 +4,11 @@ A sleek macOS desktop app that overrides the GPS location of a **USB-tethered iP
 
 Built by [CT Web Solutions](https://ctwebsolutions.com).
 
+[![Download Phantom](https://img.shields.io/badge/⬇_Download_Phantom-1.0.0_·_macOS_arm64-e63946?style=for-the-badge)](https://github.com/bitbuyer420/phantom/releases/latest/download/Phantom-1.0.0-arm64.dmg)
+
 ## Download
 
-Grab the latest `.dmg` from [Releases](../../releases). Apple Silicon (arm64) only.
+**[⬇ Download Phantom-1.0.0-arm64.dmg (161 MB)](https://github.com/bitbuyer420/phantom/releases/latest/download/Phantom-1.0.0-arm64.dmg)** — or browse all versions on the [Releases page](../../releases). Apple Silicon (arm64) only.
 
 > The app is not notarized — on first launch, right-click the app → **Open** → **Open**.
 
