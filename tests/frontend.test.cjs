@@ -11,3 +11,13 @@ test('failed route extension removes pending stop while preserving movement',()=
 test('saved places use active device query',async()=>{const r=renderer();let called='';r.ctx.fetch=async path=>{called=path;return {ok:true,json:async()=>({bookmarks:[],recents:[]})}};await r.run('state.deviceId="phone A";loadPlaces()');assert.equal(called,'/api/places?udid=phone%20A')});
 test('repeated fixes preserve paused dashboard state',()=>{const r=renderer();r.run('onFix=()=>{};state.paused=true;handle({type:"fix",lat:1,lon:2});handle({type:"fix",lat:1,lon:2})');assert.match(r.node('sessionConnection').textContent,/Paused/)});
 test('save response from previous device cannot replace visible library',async()=>{const r=renderer();let resolve;r.ctx.fetch=()=>new Promise(done=>resolve=done);const pending=r.run('state.deviceId="A";persistLibrary([{id:"a"}])');r.run('state.deviceId="B";libraryGeneration++;library=[{id:"b"}];libraryBusy=true');resolve({ok:true});await pending;assert.equal(r.run('library[0].id'),'b');assert.equal(r.run('libraryBusy'),true)});
+
+test('satellite tile origins are permitted by the shipped CSP',()=>{
+  const html=fs.readFileSync('engine/phantom/webui/index.html','utf8');
+  const script=fs.readFileSync('engine/phantom/webui/app.js','utf8');
+  const policy=html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/)[1];
+  const connect=policy.split(';').map(s=>s.trim()).find(s=>s.startsWith('connect-src ')).split(/\s+/).slice(1);
+  const tiles=script.match(/tiles:\s*\["([^"]+)"/)[1];
+  assert.ok(connect.includes(new URL(tiles).origin),'Satellite fetch must be allowed in the actual HTML policy');
+  assert.ok(!connect.includes('*'),'Keep the policy restricted to explicit origins');
+});
