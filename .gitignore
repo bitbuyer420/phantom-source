@@ -1,0 +1,33 @@
+# Build output (never commit; these get signed/notarized fresh)
+dist/
+build/
+out/
+*.dmg
+*.pkg
+*.zip
+
+# Dev dependencies / environments.
+# The engine .venv embeds ABSOLUTE owner paths in its shebangs + pyvenv.cfg —
+# it must never be committed or bundled. The shipped app carries a relocatable
+# bundled interpreter instead (see packaging).
+**/.venv/
+**/node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local runtime / logs / OS cruft
+*.log
+.DS_Store
+.env
+.env.*
+
+# User data — real bookmarks/recents/Home pin + saved spoof coords. Never ship.
+**/config.json
+
+# Bundled runtime staging (created during packaging)
+app/resources/python/
+
+# Hosting and build metadata
+.vercel/
+*.egg-info/

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Phantom</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tiles.openfreemap.org; font-src 'self' data:; worker-src blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org" />
+  <link href="maplibre-gl.css" rel="stylesheet" />
+  <link href="style.css?v=1.1.0-polish2" rel="stylesheet" />
+</head>
+<body>
+  <div id="map"></div>
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <button id="devicePill" class="pill" title="Device status">
+      <span class="dot off" id="statusDot"></span>
+      <span id="deviceName">No device</span>
+    </button>
+    <div class="search">
+      <input id="search" type="text" placeholder="Search places or coordinates · Enter" autocomplete="off" aria-label="Search places or coordinates; press Enter" />
+      <div id="searchResults" class="search-results hidden"></div>
+    </div>
+    <div class="mode-toggle" id="modeToggle">
+      <button data-mode="static" class="active">Static</button>
+      <button data-mode="route">Route</button>
+    </div>
+  </header>
+
+  <button id="locateBtn" class="iconbtn locate" title="Center on the virtual location">◎</button>
+
+  <div id="gate" class="gate hidden">
+    <span id="gateMsg">Not ready</span>
+    <button id="gateBtn" class="btn primary hidden">Enable</button>
+  </div>
+
+  <!-- Always-visible "you are currently spoofing" indicator -->
+  <div id="spoofBar" class="spoofbar hidden">
+    <span class="live-dot"></span>
+    <span class="sb-label">Spoofing</span>
+    <b id="spoofCoords">—</b>
+    <button id="spoofStop" class="sb-stop" title="Restore real GPS (Reset)">Restore Real GPS</button>
+  </div>
+
+  <!-- Route panel (left) -->
+  <aside class="panel hidden" id="routePanel">
+    <div class="section-title">Movement</div>
+    <div class="group">
+      <div class="row">
+        <label>Preset</label>
+        <select aria-label="Movement preset" id="speedSelect" class="ios">
+          <option value="walk">Walking</option>
+          <option value="cycle">Cycling</option>
+          <option value="drive" selected>Driving</option>
+          <option value="fly">Flying ✈︎</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Speed</label>
+        <span class="speed-field"><input aria-label="Speed in miles per hour" id="speedMph" class="num" type="number" min="1" max="1000" step="1" value="37" /><span class="unit">mph</span></span>
+      </div>
+      <div class="row slider-row">
+        <input aria-label="Speed" id="speedSlider" type="range" min="0" max="1000" step="1" value="313" />
+      </div>
+      <div class="row"><label>Follow roads</label>
+        <label class="switch"><input type="checkbox" aria-label="Follow roads" id="followRoads" checked /><span class="track"></span></label>
+      </div>
+      <details><summary>Advanced speed</summary><div class="row"><label>High-speed testing <span class="muted">(up to 22,369 mph)</span></label>
+        <label class="switch"><input type="checkbox" aria-label="High-speed testing" id="ludicrous" /><span class="track"></span></label>
+      </div></details>
+    </div>
+
+    <div class="section-title">Waypoints <span id="wpCount" class="muted">(0)</span>
+      <button id="clearWps" class="btn tinted" style="float:right;padding:3px 10px;font-size:12px;margin-top:-4px">Clear</button>
+    </div>
+    <div class="group">
+      <ol id="waypointList" class="waypoints"></ol>
+      <p class="hint" id="wpHint">Tap the map (or search) to add points · max 50. Edit latitude, longitude, and stop seconds below; arrows reorder stops. While driving, new taps extend the route live.</p>
+    </div>
+
+    <div class="group">
+      <div class="row"><label>Stay at end</label>
+        <label class="switch"><input type="checkbox" aria-label="Stay at route end" id="stayAtEnd" checked /><span class="track"></span></label>
+      </div>
+      <div class="row"><label>Round trip</label>
+        <label class="switch"><input type="checkbox" aria-label="Round trip" id="roundTrip" /><span class="track"></span></label>
+      </div>
+      <div class="row"><label>Realistic motion</label>
+        <label class="switch"><input type="checkbox" aria-label="Realistic motion" id="realistic" /><span class="track"></span></label>
+      </div>
+      <div class="row"><label>Loop route <span class="muted">(keep driving)</span></label>
+        <label class="switch"><input type="checkbox" aria-label="Loop route" id="loopRoute" /><span class="track"></span></label>
+      </div>
+    </div>
+
+    <details class="route-library"><summary>Saved routes &amp; scenarios</summary>
+<label>Name <input id="routeName" maxlength="100" placeholder="Morning route" /></label>
+<label>Folder <input id="routeFolder" maxlength="100" placeholder="My routes" /></label>
+<label>Geofence radius around each waypoint (meters; 0 = off)<input id="geofenceRadius" type="number" min="0" max="100000" value="0" /></label>
+<div class="library-actions"><button id="saveRoute" class="btn tinted">Save scenario</button><button id="exportGpx" class="btn tinted">Export GPX</button></div>
+<label class="file-field">Import GPX<input id="importGpx" type="file" accept=".gpx" /></label><div id="routeLibrary"></div></details>
+    <div class="panel-actions">
+      <button id="previewBtn" class="btn tinted flex">Preview</button>
+      <button id="startBtn" class="btn primary flex">Start</button>
+      <button id="pauseBtn" class="btn tinted hidden">Pause</button><button id="stopBtn" class="btn danger flex hidden">Stop</button>
+    </div>
+  </aside>
+
+  <!-- Bottom action bar (static mode) -->
+  <div class="actionbar">
+    <button id="setBtn" class="btn primary">Change Location</button>
+    <button id="resetBtn" class="btn tinted">Restore Real GPS</button>
+    <button id="bmBtn" class="iconbtn tiny" title="Save this spot (S)">★</button>
+    <button id="pickInfo" class="pick-info" title="Copy coordinates (C)">Tap the map or search to choose a spot.</button>
+  </div>
+
+  <!-- Live readout -->
+  <div id="readout" class="readout hidden">
+    <div class="ro-line" id="roCoords">—</div>
+    <div class="ro-grid">
+      <div><b id="roSpeed">0</b><span>mph</span></div>
+      <div><b id="roEta">--:--</b><span>eta</span></div>
+      <div><b id="roHdg">0°</b><span>heading</span></div>
+    </div>
+    <div class="progress"><div id="roBar" class="bar"></div></div>
+  </div>
+
+  <!-- Device info popover -->
+  <div id="deviceInfo" class="popover hidden">
+    <h3>Device</h3>
+    <dl>
+      <div class="kv"><dt>Name</dt><dd id="diName">—</dd></div>
+      <div class="kv"><dt>Model</dt><dd id="diModel">—</dd></div>
+      <div class="kv"><dt>iOS</dt><dd id="diIos">—</dd></div>
+    </dl>
+    <h3>Status</h3>
+    <dl>
+      <div class="kv"><dt>Connection</dt><dd id="diStatus">—</dd></div>
+      <div class="kv"><dt>Developer Mode</dt><dd id="diDev">—</dd></div>
+      <div class="kv"><dt>Location Spoofed</dt><dd id="diSpoof">No</dd></div>
+    </dl>
+    <p id="diHint" class="di-hint"></p>
+    <button id="usbBtn" class="btn tinted" style="width:100%;margin-top:4px">Reconnect over USB (fixes drops)</button>
+  </div>
+
+  <section class="session-panel" aria-label="Session status"><div class="session-heading">Session</div><b id="sessionConnection" role="status">Connecting…</b><div id="sessionUpdate">No confirmed update yet</div><div id="sessionCommand">No command sent yet</div><div id="sessionElapsed"></div>
+<div class="row"><label for="mapView">Map view</label><select id="mapView" aria-label="Map view"><option value="map">Map</option><option value="satellite">Satellite · 2016</option></select></div>
+<div class="row"><label for="showHighways">Show main highways</label><label class="switch"><input type="checkbox" id="showHighways" aria-label="Show main highways" checked /><span class="track"></span></label></div>
+<details><summary>Device setup &amp; preferences</summary><ol><li>Connect and unlock your iPhone.</li><li>Accept Trust This Computer.</li><li>Enable Developer Mode under Privacy &amp; Security and restart.</li><li>Enable location control using the banner.</li></ol><label><input id="autoResume" type="checkbox" disabled /> Automatically resume this device’s saved location</label></details><button id="exportLog" class="btn tinted">Export session log</button></section>
+<section id="errorPanel" class="error-panel hidden" role="alert"><span id="errorText"></span><button id="dismissError" class="btn tinted">Dismiss</button><button id="straightRoute" class="btn tinted hidden">Use straight line</button></section>
+  <div id="toast" role="status" aria-live="polite" class="toast hidden"></div>
+
+  <script src="maplibre-gl.js"></script>
+  <script src="app.js?v=1.1.0-satellite"></script>
+</body>
+</html>

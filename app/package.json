@@ -1,0 +1,55 @@
+{
+  "name": "phantom",
+  "version": "1.1.0",
+  "description": "Phantom \u2014 desktop iOS location-testing controller for a USB-tethered iPhone (macOS).",
+  "main": "main.js",
+  "author": "CT Web Solutions",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "build:runtime": "../scripts/build-runtime.sh",
+    "build:mac": "npm run build:runtime && electron-builder --mac dir --arm64",
+    "dist:mac": "npm run build:runtime && electron-builder --mac dmg --arm64",
+    "test": "cd .. && node --test app/tests/*.test.cjs tests/*.test.cjs"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.ctwebsolutions.phantom",
+    "productName": "Phantom",
+    "asar": true,
+    "directories": {
+      "output": "../dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../engine/dist/phantom-runtime",
+        "to": "bin/phantom-runtime"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "icon": "resources/icon.icns",
+      "identity": null,
+      "target": [
+        {
+          "target": "dir",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "Phantom ${version}",
+      "artifactName": "Phantom-${version}-${arch}.${ext}"
+    }
+  }
+}

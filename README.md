@@ -1,22 +1,37 @@
-# Phantom 👻
+# Phantom
 
-A sleek macOS desktop app that overrides the GPS location of a **USB-tethered iPhone** — teleport to any point, or animate realistic movement along a road (**drive**) or through the sky (**fly**). Built on Apple's own developer location-simulation mechanism via [`pymobiledevice3`](https://github.com/doronz88/pymobiledevice3). **Nothing is installed on the phone; no jailbreak.**
+macOS location-testing app for a USB-connected iPhone, built by CT Web Solutions.
 
-Built by [CT Web Solutions](https://ctwebsolutions.com).
+[Download Phantom 1.1.0 for Apple Silicon](https://phantom-location.vercel.app/) · [Release notes](RELEASE_NOTES_1.1.0.md)
 
-[![Download Phantom](https://img.shields.io/badge/⬇_Download_Phantom-1.0.0_·_macOS_arm64-e63946?style=for-the-badge)](https://github.com/bitbuyer420/phantom/releases/latest/download/Phantom-1.0.0-arm64.dmg)
+The download bundles its Python runtime. No Python installation is required for the packaged app. The app is ad-hoc signed, not Apple-notarized. A trusted iPhone with Developer Mode is required; USB compatibility must be checked on the target iOS version.
 
-## Download
+## Development
 
-**[⬇ Download Phantom-1.0.0-arm64.dmg (161 MB)](https://github.com/bitbuyer420/phantom/releases/latest/download/Phantom-1.0.0-arm64.dmg)** — or browse all versions on the [Releases page](../../releases). Apple Silicon (arm64) only.
+Use Node.js 22+, Python 3.13+ with OpenSSL, and uv.
 
-> The app is not notarized — on first launch, right-click the app → **Open** → **Open**.
+```sh
+cd engine
+uv sync --locked
+cd ../app
+npm ci
+npm start
+```
 
-## Requirements
+Run `bash scripts/test.sh` from the repository root, or `npm test` from app for frontend/lifecycle checks. Tests mock iPhone I/O.
 
-- macOS (Apple Silicon), iPhone on iOS 17+ with Developer Mode enabled and trusted over USB
-- Python 3.13 + OpenSSL (for the tunnel runtime; the app guides setup)
+## Build on Apple Silicon macOS
 
-## Responsible use
+```sh
+uv pip install --python engine/.venv/bin/python pyinstaller
+cd app
+npm run build:mac
+```
 
-Phantom only changes what *your own* device reports. Spoofing location can violate some apps' terms of service. Use responsibly.
+Builds appear in `dist/`. No credentials, device data, virtual environments, or generated app bundles are stored in this repository.
+
+## Features and providers
+
+Pause/resume routes, per-device libraries, GPX import/export, timed stops, session logs, and sampled geofences. Map/Satellite uses historical EOX 2016/2017 imagery with attribution. See release notes for map behavior, provider configuration, and limitations.
+
+Public search/routing services have usage limits. Distributed deployments must configure suitable providers. Walking/cycling road routing requires separately configured endpoints. No telemetry or analytics is added.
