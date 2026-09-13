@@ -11,21 +11,7 @@ if [ ! -x "$PYINSTALLER" ]; then
 fi
 
 cd "$ENGINE"
-"$PYINSTALLER" \
-  --noconfirm \
-  --clean \
-  --onedir \
-  --name phantom-runtime \
-  --paths "$ENGINE" \
-  --add-data "phantom/webui:phantom/webui" \
-  --collect-all pymobiledevice3 \
-  --copy-metadata apple-compress \
-  --copy-metadata pyimg4 \
-  --copy-metadata ipsw-parser \
-  --copy-metadata pymobiledevice3 \
-  --collect-submodules uvicorn \
-  --collect-submodules fastapi \
-  phantom_runtime.py
+"$PYINSTALLER" --noconfirm --clean phantom-runtime.spec
 
 "$ENGINE/dist/phantom-runtime/phantom-runtime" --help >/dev/null
 "$ENGINE/dist/phantom-runtime/phantom-runtime" tunneld --check

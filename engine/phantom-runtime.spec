@@ -29,6 +29,15 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+# Strip machine-specific build prefixes from Python's compiled build metadata.
+# Runtime sys.prefix/sys.exec_prefix are unaffected.
+from pathlib import Path
+from PyInstaller.config import CONF
+cache = CONF['code_cache'].setdefault(id(a.pure), {})
+for module_name, source_path, _kind in a.pure:
+    if module_name.startswith('_sysconfigdata'):
+        source = Path(source_path).read_text().replace(str(Path.home()), '/opt/phantom-build')
+        cache[module_name] = compile(source, Path(source_path).name, 'exec')
 pyz = PYZ(a.pure)
 
 exe = EXE(
